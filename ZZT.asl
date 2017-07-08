@@ -13,21 +13,20 @@ startup
     settings.Add("overpass", true, "Capital City Highway Overpass", "splits");
     settings.Add("crowbar", true, "Obtained Crowbar", "splits");
     settings.Add("pjPark1", true, "Patrick James Park Pt. 1", "splits");
+    settings.Add("pjPark2", true, "Patrick James Park Pt. 2", "splits");
+    settings.Add("pjPark3", true, "Patrick James Park Pt. 3", "splits");
+    settings.Add("sidewaysBuilding", true, "Fallen-over Building", "splits");
+    settings.Add("financialDistrict", true, "Financial District", "splits");
+    settings.Add("constructionSite", true, "Construction Site", "splits");
+    settings.Add("destroyedBuilding1", true, "Destroyed Building Pt. 1", "splits");
+    settings.Add("destroyedBuilding2", true, "Destroyed Building Pt. 2", "splits");
+    settings.Add("dmitriCanal", false, "(Karen) Dmitri Canal", "splits");
 }
 
 init
 {
-	// Can't seem to use memory.ReadValue with these variables, so *magic numbers* for now.
-	// if you see these numbers, just pretend with your eyeballs that these variables take their place
-	//vars.GAMETIME_ADDR = (IntPtr)0x204144B4;
-	//vars.AREA_ADDR = (IntPtr)0x2036BBB0;
-	//vars.SUBAREA_ADDR = (IntPtr)0x2036BBB8;
-
 	// Boolean values to check if the split has already been hit
 	vars.splits = new HashSet<string>();
-
-	vars.area = 0;
-	vars.subArea = 0;
 }
 
 update
@@ -131,6 +130,62 @@ split
 	if (settings["pjPark1"] && !(vars.splits.Contains("pjPark1")) && vars.area == 1 && vars.subArea == 5)
 	{
 		vars.splits.Add("pjPark1");
+		return true;
+	}
+
+	// Patrick James Park Pt. 2
+	if (settings["pjPark2"] && !(vars.splits.Contains("pjPark2")) && vars.area == 1 && vars.subArea == 7)
+	{
+		vars.splits.Add("pjPark2");
+		return true;
+	}
+
+	// Patrick James Park Pt. 3
+	if (settings["pjPark3"] && !(vars.splits.Contains("pjPark3")) && vars.area == 1 && vars.subArea == 10)
+	{
+		vars.splits.Add("pjPark3");
+		return true;
+	}
+
+	// Fallen-Over Building
+	if (settings["sidewaysBuilding"] && !(vars.splits.Contains("sidewaysBuilding")) && vars.area == 2 && vars.subArea == 0)
+	{
+		vars.splits.Add("sidewaysBuilding");
+		return true;
+	}
+
+	// Financial District
+	if (settings["financialDistrict"] && !(vars.splits.Contains("financialDistrict")) && vars.area == 2 && vars.subArea == 2)
+	{
+		vars.splits.Add("financialDistrict");
+		return true;
+	}
+
+	// Construction Site
+	if (settings["constructionSite"] && !(vars.splits.Contains("constructionSite")) && vars.area == 2 && vars.subArea == 3)
+	{
+		vars.splits.Add("constructionSite");
+		return true;
+	}
+
+	// Destroyed Building Pt. 1
+	if (settings["destroyedBuilding1"] && !(vars.splits.Contains("destroyedBuilding1")) && vars.area == 2 && vars.subArea == 4)
+	{
+		vars.splits.Add("destroyedBuilding1");
+		return true;
+	}
+
+	// Destroyed Building Pt. 2
+	if (settings["destroyedBuilding2"] && !(vars.splits.Contains("destroyedBuilding2")) && vars.area == 2 && vars.subArea == 7)
+	{
+		vars.splits.Add("destroyedBuilding2");
+		return true;
+	}
+
+	// (Karen) Dmitri Canal
+	if (settings["dmitriCanal"] && !(vars.splits.Contains("dmitriCanal")) && vars.area == 3 && vars.subArea == 0)
+	{
+		vars.splits.Add("dmitriCanal");
 		return true;
 	}
 }
