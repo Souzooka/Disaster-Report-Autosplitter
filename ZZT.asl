@@ -42,25 +42,28 @@ init
 
 update
 {
+	// In case of a PCSX2 update changing this, or using this script on another emulator
+	const int PCSX2_OFFSET = 0x20000000;
+
 	// Update our level variables for splitting
-	vars.area = memory.ReadValue<int>((IntPtr)0x2036BBB0);
-	vars.subArea = memory.ReadValue<int>((IntPtr)0x2036BBB8);
-	vars.checkpoint = memory.ReadValue<int>((IntPtr)0x2036BBC0);
-	vars.crowbar = memory.ReadValue<bool>((IntPtr)0x203535B8);
-	vars.ending7Flag = memory.ReadValue<bool>((IntPtr)0x2036D7EB);
+	vars.area = memory.ReadValue<int>((IntPtr)0x36BBB0 + PCSX2_OFFSET);
+	vars.subArea = memory.ReadValue<int>((IntPtr)0x36BBB8 + PCSX2_OFFSET);
+	vars.checkpoint = memory.ReadValue<int>((IntPtr)0x36BBC0 + PCSX2_OFFSET);
+	vars.crowbar = memory.ReadValue<bool>((IntPtr)0x3535B8 + PCSX2_OFFSET);
+	vars.ending7Flag = memory.ReadValue<bool>((IntPtr)0x36D7EB + PCSX2_OFFSET);
 
 	// For game time
 	vars.FRAMES_PER_SECOND = 60; // NOTE: Disaster Report *is* 30FPS, but the in-game timer is based off 60 ticks per second, it just skips a tick each frame.
-	vars.gameTimeSeconds = memory.ReadValue<int>((IntPtr)0x204144B4);
-	vars.gameTimeTicks = memory.ReadValue<float>((IntPtr)0x20380748);
+	vars.gameTimeSeconds = memory.ReadValue<int>((IntPtr)0x4144B4 + PCSX2_OFFSET);
+	vars.gameTimeTicks = memory.ReadValue<float>((IntPtr)0x380748 + PCSX2_OFFSET);
 
 	vars.gameTime = vars.gameTimeSeconds + (vars.gameTimeTicks / vars.FRAMES_PER_SECOND);
 
 	// For start
-	vars.gameStarted = memory.ReadValue<int>((IntPtr)0x20BAA7F0) == 1508400;
+	vars.gameStarted = memory.ReadValue<int>((IntPtr)0xBAA7F0 + PCSX2_OFFSET) == 1508400;
 
 	// Used to check if a reset happens
-	current.inGame = memory.ReadValue<int>((IntPtr)0x20353838);
+	current.inGame = memory.ReadValue<int>((IntPtr)0x353838 + PCSX2_OFFSET);
 
 	// Whenever timer is paused, clear all the splits;
 	if (timer.CurrentPhase == TimerPhase.NotRunning) 
