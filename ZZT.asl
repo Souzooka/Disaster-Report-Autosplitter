@@ -26,6 +26,12 @@ startup
     settings.Add("subway", false, "(Karen) Subway", "splits");
     settings.Add("reservoir", false, "(Karen) Reservoir", "splits");
     settings.Add("subwayPlatformer", false, "(Karen) Subway Gauntlet", "splits");
+    settings.Add("carDealer", true, "(Kelly) Car Dealership", "splits");
+    settings.Add("amusementPark", true, "(Kelly) Amusement Park", "splits");
+    settings.Add("swan", true, "(Kelly) Swan Boat Ride", "splits");
+    settings.Add("kellyHouse1", true, "(Kelly) Kelly's Neighborhood Pt. 1", "splits");
+    settings.Add("kellyHouse2", true, "(Kelly) Kelly's Neighborhood Pt. 2", "splits");
+    settings.Add("ending7", true, "(Kelly) Ending 7", "splits");
 }
 
 init
@@ -40,11 +46,18 @@ update
 	vars.area = memory.ReadValue<int>((IntPtr)0x2036BBB0);
 	vars.subArea = memory.ReadValue<int>((IntPtr)0x2036BBB8);
 	vars.checkpoint = memory.ReadValue<int>((IntPtr)0x2036BBC0);
+	vars.crowbar = memory.ReadValue<bool>((IntPtr)0x203535B8);
+
+	// For game time
+	vars.gameTime = memory.ReadValue<int>((IntPtr)0x204144B4);
+
+	// For start
+	vars.gameStarted = (memory.ReadValue<int>((IntPtr)0x20BAA7F0) == 1508400) ? true : false;
 
 	// Used to check if a reset happens
 	current.inGame = memory.ReadValue<int>((IntPtr)0x20353838);
 
-	// Whenever timer is started, clear all the splits;
+	// Whenever timer is paused, clear all the splits;
 	if (timer.CurrentPhase == TimerPhase.NotRunning) 
 	{
 		vars.splits.Clear();
@@ -68,13 +81,12 @@ isLoading
 
 gameTime
 {
-    return TimeSpan.FromSeconds(memory.ReadValue<int>((IntPtr)0x204144B4));
+    return TimeSpan.FromSeconds(vars.gameTime);
 }
 
-// TODO: This starts about a second late
 start
 {
-	if (!vars.splits.Contains("start") && vars.area == 1 && vars.subArea == 0)
+	if (!vars.splits.Contains("start") && vars.gameStarted)
 	{
 		vars.splits.Add("start");
 		return true;
@@ -125,7 +137,7 @@ split
 
 	// Crowbar
 	// Note: This particular address read is a bool indicating if the crowbar has been picked up
-	if (settings["crowbar"] && !(vars.splits.Contains("crowbar")) && memory.ReadValue<bool>((IntPtr)0x203535B8))
+	if (settings["crowbar"] && !(vars.splits.Contains("crowbar")) && vars.crowbar)
 	{
 		vars.splits.Add("crowbar");
 		return true;
@@ -226,6 +238,49 @@ split
 	if (settings["subwayPlatformer"] && !(vars.splits.Contains("subwayPlatformer")) && vars.area == 5 && vars.subArea == 0 && vars.checkpoint == 3)
 	{
 		vars.splits.Add("subwayPlatformer");
+		return true;
+	}
+
+	// (Kelly) Car Dealership
+	if (settings["carDealer"] && !(vars.splits.Contains("carDealer")) && vars.area == 4 && vars.subArea == 0)
+	{
+		vars.splits.Add("carDealer");
+		return true;
+	}
+
+	// (Kelly) Amusement Park
+	if (settings["amusementPark"] && !(vars.splits.Contains("amusementPark")) && vars.area == 4 && vars.subArea == 1)
+	{
+		vars.splits.Add("amusementPark");
+		return true;
+	}
+
+	// (Kelly) Swan Boat Ride
+	if (settings["swan"] && !(vars.splits.Contains("swan")) && vars.area == 4 && vars.subArea == 2)
+	{
+		vars.splits.Add("swan");
+		return true;
+	}
+
+	// (Kelly) Kelly's Neighborhood Pt. 1
+	if (settings["kellyHouse1"] && !(vars.splits.Contains("kellyHouse1")) && vars.area == 4 && vars.subArea == 3 && vars.checkpoint == 4)
+	{
+		vars.splits.Add("kellyHouse1");
+		return true;
+	}
+
+	// (Kelly) Kelly's Neighborhood Pt. 2
+	if (settings["kellyHouse2"] && !(vars.splits.Contains("kellyHouse2")) && vars.area == 4 && vars.subArea == 4)
+	{
+		vars.splits.Add("kellyHouse2");
+		return true;
+	}
+
+	// (Kelly) Ending 7
+	// TODO: This memory value is retained into new game, there is likely a better way of determining if ending 7 is hit. Tentative.
+	if (settings["ending7"] && !(vars.splits.Contains("ending7")) && memory.ReadValue<float>((IntPtr)0x20380CAC) == 1)
+	{
+		vars.splits.Add("ending7");
 		return true;
 	}
 }
