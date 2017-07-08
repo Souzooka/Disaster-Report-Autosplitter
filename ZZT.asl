@@ -47,6 +47,7 @@ update
 	vars.subArea = memory.ReadValue<int>((IntPtr)0x2036BBB8);
 	vars.checkpoint = memory.ReadValue<int>((IntPtr)0x2036BBC0);
 	vars.crowbar = memory.ReadValue<bool>((IntPtr)0x203535B8);
+	vars.ending7Flag = memory.ReadValue<bool>((IntPtr)0x2036D7EB);
 
 	// For game time
 	vars.gameTime = memory.ReadValue<int>((IntPtr)0x204144B4);
