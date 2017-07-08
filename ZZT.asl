@@ -21,6 +21,11 @@ startup
     settings.Add("destroyedBuilding1", true, "Destroyed Building Pt. 1", "splits");
     settings.Add("destroyedBuilding2", true, "Destroyed Building Pt. 2", "splits");
     settings.Add("dmitriCanal", false, "(Karen) Dmitri Canal", "splits");
+    settings.Add("parkAve", false, "(Karen) Park Ave & Main", "splits");
+    settings.Add("karenHouse", false, "(Karen) Karen's Neighborhood", "splits");
+    settings.Add("subway", false, "(Karen) Subway", "splits");
+    settings.Add("reservoir", false, "(Karen) Reservoir", "splits");
+    settings.Add("subwayPlatformer", false, "(Karen) Subway Gauntlet", "splits");
 }
 
 init
@@ -186,6 +191,41 @@ split
 	if (settings["dmitriCanal"] && !(vars.splits.Contains("dmitriCanal")) && vars.area == 3 && vars.subArea == 0)
 	{
 		vars.splits.Add("dmitriCanal");
+		return true;
+	}
+
+	// (Karen) Park Ave & Main
+	if (settings["parkAve"] && !(vars.splits.Contains("parkAve")) && vars.area == 3 && vars.subArea == 1)
+	{
+		vars.splits.Add("parkAve");
+		return true;
+	}
+
+	// (Karen) Karen's Neighborhood
+	if (settings["karenHouse"] && !(vars.splits.Contains("karenHouse")) && vars.area == 3 && vars.subArea == 0 && vars.checkpoint == 12)
+	{
+		vars.splits.Add("karenHouse");
+		return true;
+	}
+
+	// (Karen) Subway
+	if (settings["subway"] && !(vars.splits.Contains("subway")) && vars.area == 3 && vars.subArea == 3)
+	{
+		vars.splits.Add("subway");
+		return true;
+	}
+
+	// (Karen) Reservoir
+	if (settings["reservoir"] && !(vars.splits.Contains("reservoir")) && vars.area == 3 && vars.subArea == 4)
+	{
+		vars.splits.Add("reservoir");
+		return true;
+	}
+
+	// (Karen) Subway Gauntlet
+	if (settings["subwayPlatformer"] && !(vars.splits.Contains("subwayPlatformer")) && vars.area == 5 && vars.subArea == 0 && vars.checkpoint == 3)
+	{
+		vars.splits.Add("subwayPlatformer");
 		return true;
 	}
 }
