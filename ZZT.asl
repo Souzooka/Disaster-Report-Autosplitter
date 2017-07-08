@@ -50,10 +50,14 @@ update
 	vars.ending7Flag = memory.ReadValue<bool>((IntPtr)0x2036D7EB);
 
 	// For game time
-	vars.gameTime = memory.ReadValue<int>((IntPtr)0x204144B4);
+	vars.FRAMES_PER_SECOND = 60; // NOTE: Disaster Report *is* 30FPS, but the in-game timer is based off 60 ticks per second, it just skips a tick each frame.
+	vars.gameTimeSeconds = memory.ReadValue<int>((IntPtr)0x204144B4);
+	vars.gameTimeTicks = memory.ReadValue<float>((IntPtr)0x20380748);
+
+	vars.gameTime = vars.gameTimeSeconds + (vars.gameTimeTicks / vars.FRAMES_PER_SECOND);
 
 	// For start
-	vars.gameStarted = (memory.ReadValue<int>((IntPtr)0x20BAA7F0) == 1508400) ? true : false;
+	vars.gameStarted = memory.ReadValue<int>((IntPtr)0x20BAA7F0) == 1508400;
 
 	// Used to check if a reset happens
 	current.inGame = memory.ReadValue<int>((IntPtr)0x20353838);
@@ -278,8 +282,7 @@ split
 	}
 
 	// (Kelly) Ending 7
-	// TODO: This memory value is retained into new game, there is likely a better way of determining if ending 7 is hit. Tentative.
-	if (settings["ending7"] && !(vars.splits.Contains("ending7")) && memory.ReadValue<float>((IntPtr)0x20380CAC) == 1)
+	if (settings["ending7"] && !(vars.splits.Contains("ending7")) && vars.ending7Flag)
 	{
 		vars.splits.Add("ending7");
 		return true;
