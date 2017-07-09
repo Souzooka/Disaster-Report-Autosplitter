@@ -31,7 +31,17 @@ startup
     settings.Add("swan", true, "(Kelly) Swan Boat Ride", "splits");
     settings.Add("kellyHouse1", true, "(Kelly) Kelly's Neighborhood Pt. 1", "splits");
     settings.Add("kellyHouse2", true, "(Kelly) Kelly's Neighborhood Pt. 2", "splits");
-    settings.Add("ending7", true, "(Kelly) Ending 7", "splits");
+    settings.Add("ending7", false, "(Kelly) Ending 7", "splits");
+    settings.Add("hospital", true, "(Kelly) Saint Maria Hospital", "splits");
+    settings.Add("keithTheThief", true, "Entered Christophe Construction", "splits");
+    settings.Add("townCrier", true, "Town Crier News Dept.", "splits");
+    settings.Add("ending56", false, "Ending 5/6", "splits");
+    settings.Add("windrunnerPark", true, "Windrunner Park", "splits");
+    settings.Add("mayStadium", true, "May Stadium", "splits");
+    settings.Add("heliChase", true, "Helicopter Chase", "splits");
+    settings.Add("lincolnPlaza1", true, "Lincoln Plaza Pt. 1", "splits");
+    settings.Add("lincolnPlaza2", true, "Lincoln Plaza Pt. 2", "splits");
+    settings.Add("lincolnPlaza3", true, "Lincoln Plaza Pt. 3", "splits");
 }
 
 init
@@ -51,13 +61,14 @@ update
 	vars.checkpoint = memory.ReadValue<int>((IntPtr)0x36BBC0 + PCSX2_OFFSET);
 	vars.crowbar = memory.ReadValue<bool>((IntPtr)0x3535B8 + PCSX2_OFFSET);
 	vars.ending7Flag = memory.ReadValue<bool>((IntPtr)0x36D7EB + PCSX2_OFFSET);
+	vars.ending56Flag = memory.ReadValue<bool>((IntPtr)0x3C5FA0 + PCSX2_OFFSET);
 
 	// For game time
-	vars.FRAMES_PER_SECOND = 60; // NOTE: Disaster Report *is* 30FPS, but the in-game timer is based off 60 ticks per second, it just skips a tick each frame.
+	vars.TICKS_PER_SECOND = 60; // Note: Disaster Report uses Vsync cycles (60.00, NOT 59.97) for its timer. DR waits 2 vsync cycles for each frame, and DR uses that var to determine how many ticks to increment by each frame.
 	vars.gameTimeSeconds = memory.ReadValue<int>((IntPtr)0x4144B4 + PCSX2_OFFSET);
 	vars.gameTimeTicks = memory.ReadValue<float>((IntPtr)0x380748 + PCSX2_OFFSET);
 
-	vars.gameTime = vars.gameTimeSeconds + (vars.gameTimeTicks / vars.FRAMES_PER_SECOND);
+	vars.gameTime = vars.gameTimeSeconds + (vars.gameTimeTicks / vars.TICKS_PER_SECOND);
 
 	// For start
 	vars.gameStarted = memory.ReadValue<int>((IntPtr)0xBAA7F0 + PCSX2_OFFSET) == 1508400;
@@ -89,6 +100,8 @@ isLoading
 
 gameTime
 {
+	// Minor bug: "ticks" are retained from the previous game before the player gains control in a new game
+	// we could just write to this address but then I'd be doing IREM's job for them
     return TimeSpan.FromSeconds(vars.gameTime);
 }
 
@@ -243,7 +256,7 @@ split
 	}
 
 	// (Karen) Subway Gauntlet
-	if (settings["subwayPlatformer"] && !(vars.splits.Contains("subwayPlatformer")) && vars.area == 5 && vars.subArea == 0 && vars.checkpoint == 3)
+	if (settings["subwayPlatformer"] && !(vars.splits.Contains("subwayPlatformer")) && vars.area == 5 && vars.subArea == 0)
 	{
 		vars.splits.Add("subwayPlatformer");
 		return true;
@@ -290,4 +303,75 @@ split
 		vars.splits.Add("ending7");
 		return true;
 	}
+
+	// (Kelly) Saint Katrina Hospital
+	if (settings["hospital"] && !(vars.splits.Contains("hospital")) && vars.area == 5 && vars.subArea == 10)
+	{
+		vars.splits.Add("hospital");
+		return true;
+	}
+
+	// Entered Christophe Construction
+	if (settings["keithTheThief"] && !(vars.splits.Contains("keithTheThief")) && vars.area == 5 && vars.subArea == 3)
+	{
+		vars.splits.Add("keithTheThief");
+		return true;
+	}
+
+	// Town Crier News Dept.
+	if (settings["townCrier"] && !(vars.splits.Contains("townCrier")) && vars.area == 5 && vars.subArea == 5)
+	{
+		vars.splits.Add("townCrier");
+		return true;
+	}
+
+	// Ending 5/6
+	if (settings["ending56"] && !(vars.splits.Contains("ending56")) && vars.ending56Flag)
+	{
+		vars.splits.Add("ending56");
+		return true;
+	}
+
+	// Windrunner Park
+	if (settings["windrunnerPark"] && !(vars.splits.Contains("windrunnerPark")) && vars.area == 5 && vars.subArea == 7)
+	{
+		vars.splits.Add("windrunnerPark");
+		return true;
+	}
+
+	// May Stadium
+	if (settings["mayStadium"] && !(vars.splits.Contains("mayStadium")) && vars.area == 6 && (vars.subArea == 0 || vars.subArea == 5))
+	{
+		vars.splits.Add("mayStadium");
+		return true;
+	}
+
+	// Helicopter Chase
+	if (settings["heliChase"] && !(vars.splits.Contains("heliChase")) && vars.area == 6 && (vars.subArea == 1 || vars.subArea == 6))
+	{
+		vars.splits.Add("heliChase");
+		return true;
+	}
+
+	// Lincoln Plaza Pt. 1
+	if (settings["lincolnPlaza1"] && !(vars.splits.Contains("lincolnPlaza1")) && vars.area == 6 && (vars.subArea == 2 || vars.subArea == 7))
+	{
+		vars.splits.Add("lincolnPlaza1");
+		return true;
+	}
+
+	// Lincoln Plaza Pt. 2
+	if (settings["lincolnPlaza2"] && !(vars.splits.Contains("lincolnPlaza2")) && vars.area == 6 && (vars.subArea == 3 || vars.subArea == 8))
+	{
+		vars.splits.Add("lincolnPlaza2");
+		return true;
+	}
+
+	// Lincoln Plaza Pt. 3
+	if (settings["lincolnPlaza3"] && !(vars.splits.Contains("lincolnPlaza3")) && vars.area == 6 && (vars.subArea == 4 || vars.subArea == 9))
+	{
+		vars.splits.Add("lincolnPlaza3");
+		return true;
+	}
+
 }
