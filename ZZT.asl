@@ -56,6 +56,7 @@ init
   // Dictionary used to split when entering a new area
   // Key: Represents level IDs (area, subArea, checkPoint)
   // Value: Key which represents a LiveSplit settings key
+  // NOTE FOR DEBUGGERS: Setting 0x2036BC00 to 1 will warp to the level data loaded into (0x2036BBB0, 0x2036BBB8, 0x2036BBC0)
   vars.LevelIds = new Dictionary<Tuple<int, int, int>, string>
   {
     {Tuple.Create(1, 11, 0),  "bridge1"},
@@ -146,7 +147,6 @@ init
     vars.GameStarted,
     vars.InGame,
   };
-
 }
 
 update
@@ -187,7 +187,7 @@ start { return vars.GameStarted.Current == 1508400; }
 split
 {
   // The game retains area values in the main menu, so check this
-  if (vars.InGame.Current == 0) { return false; }
+  if (!vars.InGame.Current) { return false; }
 
   // Splits for level/checkpoint transitions
   if (!vars.LevelId.Current.Equals(vars.LevelId.Old))
@@ -203,15 +203,6 @@ split
       vars.Splits.Add(key);
       return settings[key];
     }
-  }
-
-  // Ending 1 & 2
-  if (settings["ending12"] && !(vars.Splits.Contains("ending12")) && 
-    vars.Area.Current == 7 && (vars.SubArea.Current == 7 || vars.SubArea.Current == 16) && 
-    vars.keithPosY < -95 && vars.Fade.Current == 128)
-  {
-    vars.Splits.Add("ending12");
-    return true;
   }
 
   // Crowbar
@@ -231,6 +222,15 @@ split
   {
     vars.Splits.Add("ending7");
     print("DEBUG: ending7 split");
+    return true;
+  }
+
+  // Ending 1 & 2
+  if (settings["ending12"] && !(vars.Splits.Contains("ending12")) && 
+    vars.Area.Current == 7 && (vars.SubArea.Current == 7 || vars.SubArea.Current == 16) && 
+    vars.keithPosY < -95 && vars.Fade.Current == 128)
+  {
+    vars.Splits.Add("ending12");
     return true;
   }
 }
