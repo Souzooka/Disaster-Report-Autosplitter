@@ -1,5 +1,5 @@
-// I have no idea how to access PCSX2's memory values through state :(
-// Commence hacky solutions!
+// State variables are not applicate for emulators
+// For read variables, see the "update"/"init" block
 state("pcsx2", "null") {}
 
 startup
@@ -51,368 +51,183 @@ startup
 init
 {
   // Boolean values to check if the split has already been hit
-  vars.splits = new HashSet<string>();
+  vars.Splits = new HashSet<string>();
+
+  // Dictionary used to split when entering a new area
+  // Key: Represents level IDs (area, subArea, checkPoint)
+  // Value: Key which represents a LiveSplit settings key
+  vars.LevelIds = new Dictionary<Tuple<int, int, int>, string>
+  {
+    {Tuple.Create(1, 11, 0),  "bridge1"},
+    {Tuple.Create(1, 2, 0),   "restaurant"},
+    {Tuple.Create(1, 3, 0),   "karen"},
+    {Tuple.Create(1, 6, 1),   "bridge2"},
+    {Tuple.Create(1, 8, 1),   "overpass"},
+    {Tuple.Create(1, 5, 4),   "pjPark1"},
+    {Tuple.Create(1, 7, 1),   "pjPark2"},
+    {Tuple.Create(1, 10, 1),  "pjPark3"},
+    {Tuple.Create(2, 0, 1),   "sidewaysBuilding"},
+    {Tuple.Create(2, 2, 1),   "financialDistrict"},
+    {Tuple.Create(2, 3, 1),   "constructionSite"},
+    {Tuple.Create(2, 4, 4),   "destroyedBuilding1"},
+    {Tuple.Create(2, 7, 1),   "destroyedBuilding2"},
+    {Tuple.Create(3, 0, 1),   "dmitriCanal"}, // Karen
+    {Tuple.Create(3, 1, 1),   "parkAve"}, // Karen
+    {Tuple.Create(3, 0, 12),  "karenHouse"}, // Karen
+    {Tuple.Create(3, 3, 1),   "subway"}, // Karen
+    {Tuple.Create(3, 4, 1),   "reservoir"}, // Karen
+    {Tuple.Create(4, 0, 0),   "carDealer"}, // Kelly
+    {Tuple.Create(4, 1, 0),   "amusementPark"}, // Kelly
+    {Tuple.Create(4, 2, 0),   "swan"}, // Kelly
+    {Tuple.Create(4, 3, 0),   "kellyHouse1"}, // Kelly
+    {Tuple.Create(4, 4, 0),   "kellyHouse2"}, // Kelly
+    {Tuple.Create(5, 0, 3),   "subwayPlatformer"}, // Karen
+    {Tuple.Create(5, 10, 4),  "hospital"}, // Kelly
+    {Tuple.Create(5, 3, 1),   "keithTheThief"}, 
+    {Tuple.Create(5, 5, 1),   "townCrier"},
+    {Tuple.Create(5, 7, 1),   "windrunnerPark"}, // Karen
+    {Tuple.Create(5, 7, 2),   "windrunnerPark"}, // Kelly
+    {Tuple.Create(6, 0, 0),   "mayStadium"}, // Karen
+    {Tuple.Create(6, 5, 0),   "mayStadium"}, // Kelly
+    {Tuple.Create(6, 1, 4),   "heliChase"}, // Karen
+    {Tuple.Create(6, 6, 4),   "heliChase"}, // Kelly
+    {Tuple.Create(6, 2, 0),   "lincolnPlaza1"}, // Karen
+    {Tuple.Create(6, 7, 0),   "lincolnPlaza1"}, // Kelly
+    {Tuple.Create(6, 3, 0),   "lincolnPlaza2"}, // Karen
+    {Tuple.Create(6, 8, 0),   "lincolnPlaza2"}, // Kelly
+    {Tuple.Create(7, 0, 0),   "lincolnPlaza3"}, // Karen
+    {Tuple.Create(7, 9, 0),   "lincolnPlaza3"}, // Kelly
+    {Tuple.Create(7, 1, 0),   "lucasCanal"}, // Karen
+    {Tuple.Create(7, 10, 0),  "lucasCanal"}, // Kelly
+    {Tuple.Create(7, 3, 0),   "stiverCC"}, // Karen
+    {Tuple.Create(7, 12, 0),  "stiverCC"}, // Kelly
+    {Tuple.Create(7, 6, 11),  "gregSniped"}, // Karen
+    {Tuple.Create(7, 15, 11), "gregSniped"}, // Kelly
+  }; 
+
+  // In case of a PCSX2 update changing this, or using this script on another emulator
+  const int Pcsx2Offset = 0x20000000;
+
+  // Update our level variables for splitting
+  vars.Area = new MemoryWatcher<int>((IntPtr)0x36BBB0 + Pcsx2Offset);
+  vars.SubArea = new MemoryWatcher<int>((IntPtr)0x36BBB8 + Pcsx2Offset);
+  vars.Checkpoint = new MemoryWatcher<int>((IntPtr)0x36BBC0 + Pcsx2Offset);
+
+  // Variables for miscellaneous splits
+  vars.Crowbar = new MemoryWatcher<bool>((IntPtr)0x3535B8 + Pcsx2Offset);
+  vars.Ending7Flag = new MemoryWatcher<int>((IntPtr)0x36D7EB + Pcsx2Offset);
+  // vars.ending56Flag = new MemoryWatcher<bool>((IntPtr)0x3C5FA0 + Pcsx2Offset);
+  vars.Fade = new MemoryWatcher<float>((IntPtr)0x3D918C + Pcsx2Offset);
+
+  // For game time
+  vars.TicksPerSecond = 60; // Note: Disaster Report uses Vsync cycles (60.00, NOT 59.97) for its timer. DR waits 2 vsync cycles for each frame, and DR uses that var to determine how many ticks to increment by each frame.
+  vars.GameTimeSeconds = new MemoryWatcher<int>((IntPtr)0x4144B4 + Pcsx2Offset);
+  vars.GameTimeTicks = new MemoryWatcher<float>((IntPtr)0x380748 + Pcsx2Offset);
+
+  // For start
+  vars.GameStarted = new MemoryWatcher<int>((IntPtr)0xBAA7F0 + Pcsx2Offset);
+
+  // For reset
+  vars.InGame = new MemoryWatcher<int>((IntPtr)0x353838 + Pcsx2Offset);
+
+  vars.Watchers = new MemoryWatcherList
+  {
+    vars.Area,
+    vars.SubArea,
+    vars.Checkpoint,
+    vars.Crowbar,
+    vars.Ending7Flag,
+    vars.Fade,
+    vars.GameTimeSeconds,
+    vars.GameTimeTicks,
+    vars.GameStarted,
+    vars.InGame,
+  };
+
 }
 
 update
 {
   // In case of a PCSX2 update changing this, or using this script on another emulator
-  const int PCSX2_OFFSET = 0x20000000;
+  const int Pcsx2Offset = 0x20000000;
 
-  // Update our level variables for splitting
-  vars.area = memory.ReadValue<int>((IntPtr)0x36BBB0 + PCSX2_OFFSET);
-  vars.subArea = memory.ReadValue<int>((IntPtr)0x36BBB8 + PCSX2_OFFSET);
-  vars.checkpoint = memory.ReadValue<int>((IntPtr)0x36BBC0 + PCSX2_OFFSET);
-  vars.crowbar = memory.ReadValue<bool>((IntPtr)0x3535B8 + PCSX2_OFFSET);
-  vars.ending7Flag = memory.ReadValue<bool>((IntPtr)0x36D7EB + PCSX2_OFFSET);
-  // vars.ending56Flag = memory.ReadValue<bool>((IntPtr)0x3C5FA0 + PCSX2_OFFSET);
-  vars.fade = memory.ReadValue<float>((IntPtr)0x3D918C + PCSX2_OFFSET);
+  // Update memory watchers
+  vars.Watchers.UpdateAll(game);
+
+  // Manually update level ids
+  vars.LevelIdOld = Tuple.Create(vars.Area.Old, vars.SubArea.Old, vars.Checkpoint.Old);
+  vars.LevelId = Tuple.Create(vars.Area.Current, vars.SubArea.Current, vars.Checkpoint.Current);
+
+  // Game time
+  vars.GameTime = vars.GameTimeSeconds.Current + (vars.GameTimeTicks.Current / vars.TicksPerSecond);
 
   // Location tracking, just in case
-  var keithAddr = (IntPtr)memory.ReadValue<int>((IntPtr)0x3810D8 + PCSX2_OFFSET) + PCSX2_OFFSET;
+  IntPtr keithAddr = memory.ReadValue<IntPtr>((IntPtr)0x3810D8 + Pcsx2Offset) + Pcsx2Offset;
   vars.keithPosX = memory.ReadValue<float>(keithAddr + 0xE0);
   vars.keithPosY = memory.ReadValue<float>(keithAddr + 0xE4);
   vars.keithPosZ = memory.ReadValue<float>(keithAddr + 0xE8);
 
-  // For game time
-  vars.TICKS_PER_SECOND = 60; // Note: Disaster Report uses Vsync cycles (60.00, NOT 59.97) for its timer. DR waits 2 vsync cycles for each frame, and DR uses that var to determine how many ticks to increment by each frame.
-  vars.gameTimeSeconds = memory.ReadValue<int>((IntPtr)0x4144B4 + PCSX2_OFFSET);
-  vars.gameTimeTicks = memory.ReadValue<float>((IntPtr)0x380748 + PCSX2_OFFSET);
-
-  vars.gameTime = vars.gameTimeSeconds + (vars.gameTimeTicks / vars.TICKS_PER_SECOND);
-
-  // For start
-  vars.gameStarted = memory.ReadValue<int>((IntPtr)0xBAA7F0 + PCSX2_OFFSET) == 1508400;
-
-  // Used to check if a reset happens
-  current.inGame = memory.ReadValue<int>((IntPtr)0x353838 + PCSX2_OFFSET);
-
   // Whenever timer is paused, clear all the splits;
-  if (timer.CurrentPhase == TimerPhase.NotRunning) 
-  {
-    vars.splits.Clear();
-  }
+  if (timer.CurrentPhase == TimerPhase.NotRunning) { vars.Splits.Clear(); }
 }
 
-reset
-{
-  if (current.inGame == 0 && old.inGame == 1) 
-  {
-    vars.splits.Clear();
-    return true;
-  }
-}
+reset { return vars.InGame.Current == 0 && vars.InGame.Old == 1; }
 
-// Pretty sure there's a cleaner way to prevent the timer from incrementing, but this is a simple enough solution for now
-isLoading
-{
-    return true;
-}
+// Prevents the in-game timer from increasing on its own (it's synced to the game's time value)
+isLoading { return true; }
 
-gameTime
-{
-  // Minor bug: "ticks" are retained from the previous game before the player gains control in a new game
-  // we could just write to this address but then I'd be doing IREM's job for them
-    return TimeSpan.FromSeconds(vars.gameTime);
-}
-
-start
-{
-  if (!vars.splits.Contains("start") && vars.gameStarted)
-  {
-    vars.splits.Add("start");
-    return true;
-  }
-}
+// Minor bug: "ticks" are retained from the previous game before the player gains control in a new game
+// we could just write to this address but then I'd be doing IREM's job for them
+gameTime { return TimeSpan.FromSeconds(vars.GameTime); }
+start { return vars.GameStarted.Current == 1508400; }
 
 split
 {
-
   // The game retains area values in the main menu, so check this
-  if (current.inGame == 0) return false;
+  if (vars.InGame.Current == 0) { return false; }
 
-  // Bridge Pt. 1
-  if (settings["bridge1"] && !(vars.splits.Contains("bridge1")) && vars.area == 1 && vars.subArea == 11)
+  // This controls most of the splits for level/checkpoint transitions
+  if (!vars.LevelId.Equals(vars.LevelIdOld))
   {
-    vars.splits.Add("bridge1");
-    return true;
+    if (!vars.LevelIds.ContainsKey(vars.LevelId)) { return false; }
+
+    // (0, 0, 0) is the default value when LS is initialized so return to prevent a false split
+    if (vars.LevelIdOld.Equals(Tuple.Create(0, 0, 0))) { return false; } 
+
+    string key = vars.LevelIds[vars.LevelId];
+    if (!vars.Splits.Contains(key))
+    {
+      vars.Splits.Add(key);
+      return settings[key];
+    }
   }
 
-  // Restaurant
-  if (settings["restaurant"] && !(vars.splits.Contains("restaurant")) && vars.area == 1 && vars.subArea == 2)
+  // Ending 1 & 2
+  if (settings["ending12"] && !(vars.Splits.Contains("ending12")) && 
+    vars.Area.Current == 7 && (vars.SubArea.Current == 7 || vars.SubArea.Current == 16) && 
+    vars.keithPosY < -95 && vars.Fade.Current == 128)
   {
-    vars.splits.Add("restaurant");
-    return true;
-  }
-
-  // Saved Karen
-  // Note: Area 1.3 is the cutscene with Karen, Area 1.4 is the playable segment following
-  if (settings["karen"] && !(vars.splits.Contains("karen")) && vars.area == 1 && vars.subArea == 3)
-  {
-    vars.splits.Add("karen");
-    return true;
-  }
-
-  // Bridge Pt. 2
-  if (settings["bridge2"] && !(vars.splits.Contains("bridge2")) && vars.area == 1 && vars.subArea == 6)
-  {
-    vars.splits.Add("bridge2");
-    return true;
-  }
-
-  // Overpass
-  if (settings["overpass"] && !(vars.splits.Contains("overpass")) && vars.area == 1 && vars.subArea == 8)
-  {
-    vars.splits.Add("overpass");
+    vars.Splits.Add("ending12");
     return true;
   }
 
   // Crowbar
   // Note: This particular address read is a bool indicating if the crowbar has been picked up
   // Tentative
-  if (settings["crowbar"] && !(vars.splits.Contains("crowbar")) && vars.crowbar)
+  if (settings["crowbar"] && !(vars.Splits.Contains("crowbar")) && vars.Crowbar.Current)
   {
-    vars.splits.Add("crowbar");
+    vars.Splits.Add("crowbar");
     print("DEBUG: crowbar split");
-    return true;
-  }
-
-  // Patrick James Park Pt. 1
-  if (settings["pjPark1"] && !(vars.splits.Contains("pjPark1")) && vars.area == 1 && vars.subArea == 5)
-  {
-    vars.splits.Add("pjPark1");
-    return true;
-  }
-
-  // Patrick James Park Pt. 2
-  if (settings["pjPark2"] && !(vars.splits.Contains("pjPark2")) && vars.area == 1 && vars.subArea == 7)
-  {
-    vars.splits.Add("pjPark2");
-    return true;
-  }
-
-  // Patrick James Park Pt. 3
-  if (settings["pjPark3"] && !(vars.splits.Contains("pjPark3")) && vars.area == 1 && vars.subArea == 10)
-  {
-    vars.splits.Add("pjPark3");
-    return true;
-  }
-
-  // Fallen-Over Building
-  if (settings["sidewaysBuilding"] && !(vars.splits.Contains("sidewaysBuilding")) && vars.area == 2 && vars.subArea == 0)
-  {
-    vars.splits.Add("sidewaysBuilding");
-    return true;
-  }
-
-  // Financial District
-  if (settings["financialDistrict"] && !(vars.splits.Contains("financialDistrict")) && vars.area == 2 && vars.subArea == 2)
-  {
-    vars.splits.Add("financialDistrict");
-    return true;
-  }
-
-  // Construction Site
-  if (settings["constructionSite"] && !(vars.splits.Contains("constructionSite")) && vars.area == 2 && vars.subArea == 3)
-  {
-    vars.splits.Add("constructionSite");
-    return true;
-  }
-
-  // Destroyed Building Pt. 1
-  if (settings["destroyedBuilding1"] && !(vars.splits.Contains("destroyedBuilding1")) && vars.area == 2 && vars.subArea == 4)
-  {
-    vars.splits.Add("destroyedBuilding1");
-    return true;
-  }
-
-  // Destroyed Building Pt. 2
-  if (settings["destroyedBuilding2"] && !(vars.splits.Contains("destroyedBuilding2")) && vars.area == 2 && vars.subArea == 7)
-  {
-    vars.splits.Add("destroyedBuilding2");
-    return true;
-  }
-
-  // (Karen) Dmitri Canal
-  if (settings["dmitriCanal"] && !(vars.splits.Contains("dmitriCanal")) && vars.area == 3 && vars.subArea == 0)
-  {
-    vars.splits.Add("dmitriCanal");
-    return true;
-  }
-
-  // (Karen) Park Ave & Main
-  if (settings["parkAve"] && !(vars.splits.Contains("parkAve")) && vars.area == 3 && vars.subArea == 1)
-  {
-    vars.splits.Add("parkAve");
-    return true;
-  }
-
-  // (Karen) Karen's Neighborhood
-  if (settings["karenHouse"] && !(vars.splits.Contains("karenHouse")) && vars.area == 3 && vars.subArea == 0 && vars.checkpoint == 12)
-  {
-    vars.splits.Add("karenHouse");
-    return true;
-  }
-
-  // (Karen) Subway
-  if (settings["subway"] && !(vars.splits.Contains("subway")) && vars.area == 3 && vars.subArea == 3)
-  {
-    vars.splits.Add("subway");
-    return true;
-  }
-
-  // (Karen) Reservoir
-  if (settings["reservoir"] && !(vars.splits.Contains("reservoir")) && vars.area == 3 && vars.subArea == 4)
-  {
-    vars.splits.Add("reservoir");
-    return true;
-  }
-
-  // (Karen) Subway Gauntlet
-  if (settings["subwayPlatformer"] && !(vars.splits.Contains("subwayPlatformer")) && vars.area == 5 && vars.subArea == 0)
-  {
-    vars.splits.Add("subwayPlatformer");
-    return true;
-  }
-
-  // (Kelly) Car Dealership
-  if (settings["carDealer"] && !(vars.splits.Contains("carDealer")) && vars.area == 4 && vars.subArea == 0)
-  {
-    vars.splits.Add("carDealer");
-    return true;
-  }
-
-  // (Kelly) Amusement Park
-  if (settings["amusementPark"] && !(vars.splits.Contains("amusementPark")) && vars.area == 4 && vars.subArea == 1)
-  {
-    vars.splits.Add("amusementPark");
-    return true;
-  }
-
-  // (Kelly) Swan Boat Ride
-  if (settings["swan"] && !(vars.splits.Contains("swan")) && vars.area == 4 && vars.subArea == 2)
-  {
-    vars.splits.Add("swan");
-    return true;
-  }
-
-  // (Kelly) Kelly's Neighborhood Pt. 1
-  if (settings["kellyHouse1"] && !(vars.splits.Contains("kellyHouse1")) && vars.area == 4 && vars.subArea == 3 && vars.checkpoint == 4)
-  {
-    vars.splits.Add("kellyHouse1");
-    return true;
-  }
-
-  // (Kelly) Kelly's Neighborhood Pt. 2
-  if (settings["kellyHouse2"] && !(vars.splits.Contains("kellyHouse2")) && vars.area == 4 && vars.subArea == 4)
-  {
-    vars.splits.Add("kellyHouse2");
     return true;
   }
 
   // (Kelly) Ending 7
   // Tentative
-  if (settings["ending7"] && !(vars.splits.Contains("ending7")) && vars.ending7Flag)
+  if (settings["ending7"] && !(vars.Splits.Contains("ending7")) && 
+    vars.Ending7Flag.Current == 128 && vars.Ending7Flag.Old == 0)
   {
-    vars.splits.Add("ending7");
+    vars.Splits.Add("ending7");
     print("DEBUG: ending7 split");
-    return true;
-  }
-
-  // (Kelly) Saint Katrina Hospital
-  if (settings["hospital"] && !(vars.splits.Contains("hospital")) && vars.area == 5 && vars.subArea == 10)
-  {
-    vars.splits.Add("hospital");
-    return true;
-  }
-
-  // Entered Christophe Construction
-  if (settings["keithTheThief"] && !(vars.splits.Contains("keithTheThief")) && vars.area == 5 && vars.subArea == 3)
-  {
-    vars.splits.Add("keithTheThief");
-    return true;
-  }
-
-  // Town Crier News Dept.
-  if (settings["townCrier"] && !(vars.splits.Contains("townCrier")) && vars.area == 5 && vars.subArea == 5)
-  {
-    vars.splits.Add("townCrier");
-    return true;
-  }
-
-/*  // Ending 5/6
-  if (settings["ending56"] && !(vars.splits.Contains("ending56")) && vars.ending56Flag)
-  {
-    vars.splits.Add("ending56");
-    return true;
-  }*/
-
-  // Windrunner Park
-  if (settings["windrunnerPark"] && !(vars.splits.Contains("windrunnerPark")) && vars.area == 5 && vars.subArea == 7)
-  {
-    vars.splits.Add("windrunnerPark");
-    return true;
-  }
-
-  // May Stadium
-  if (settings["mayStadium"] && !(vars.splits.Contains("mayStadium")) && vars.area == 6 && (vars.subArea == 0 || vars.subArea == 5))
-  {
-    vars.splits.Add("mayStadium");
-    return true;
-  }
-
-  // Helicopter Chase
-  if (settings["heliChase"] && !(vars.splits.Contains("heliChase")) && vars.area == 6 && (vars.subArea == 1 || vars.subArea == 6))
-  {
-    vars.splits.Add("heliChase");
-    return true;
-  }
-
-  // Lincoln Plaza Pt. 1
-  if (settings["lincolnPlaza1"] && !(vars.splits.Contains("lincolnPlaza1")) && vars.area == 6 && (vars.subArea == 2 || vars.subArea == 7))
-  {
-    vars.splits.Add("lincolnPlaza1");
-    return true;
-  }
-
-  // Lincoln Plaza Pt. 2
-  if (settings["lincolnPlaza2"] && !(vars.splits.Contains("lincolnPlaza2")) && vars.area == 6 && (vars.subArea == 3 || vars.subArea == 8))
-  {
-    vars.splits.Add("lincolnPlaza2");
-    return true;
-  }
-
-  // Lincoln Plaza Pt. 3
-  if (settings["lincolnPlaza3"] && !(vars.splits.Contains("lincolnPlaza3")) && vars.area == 7 && (vars.subArea == 0 || vars.subArea == 9))
-  {
-    vars.splits.Add("lincolnPlaza3");
-    return true;
-  }
-
-  // Lucas Canal
-  if (settings["lucasCanal"] && !(vars.splits.Contains("lucasCanal")) && vars.area == 7 && (vars.subArea == 1 || vars.subArea == 10))
-  {
-    vars.splits.Add("lucasCanal");
-    return true;
-  }
-
-  // Stiver Island Control Center
-  if (settings["stiverCC"] && !(vars.splits.Contains("stiverCC")) && vars.area == 7 && (vars.subArea == 3 || vars.subArea == 12))
-  {
-    vars.splits.Add("stiverCC");
-    return true;
-  }
-
-  // Greg vs. Vince: The Final Duel
-  if (settings["gregSniped"] && !(vars.splits.Contains("gregSniped")) && vars.area == 7 && (vars.subArea == 6 || vars.subArea == 15) && vars.checkpoint == 11)
-  {
-    vars.splits.Add("gregSniped");
-    return true;
-  }
-
-  if (settings["ending12"] && !(vars.splits.Contains("ending12")) && vars.area == 7 && (vars.subArea == 7 || vars.subArea == 16) && vars.keithPosY < -95 && vars.fade == 128)
-  {
-    vars.splits.Add("ending12");
     return true;
   }
 }
