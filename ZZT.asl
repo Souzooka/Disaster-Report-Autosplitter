@@ -208,7 +208,8 @@ split
   // Crowbar
   // Note: This particular address read is a bool indicating if the crowbar has been picked up
   // Tentative
-  if (settings["crowbar"] && !(vars.Splits.Contains("crowbar")) && vars.Crowbar.Current)
+  if (settings["crowbar"] && !(vars.Splits.Contains("crowbar")) && 
+    vars.Crowbar.Current && !vars.Crowbar.Old)
   {
     vars.Splits.Add("crowbar");
     print("DEBUG: crowbar split");
