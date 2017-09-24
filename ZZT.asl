@@ -131,7 +131,7 @@ init
   vars.GameStarted = new MemoryWatcher<int>((IntPtr)0xBAA7F0 + Pcsx2Offset);
 
   // For reset
-  vars.InGame = new MemoryWatcher<int>((IntPtr)0x353838 + Pcsx2Offset);
+  vars.InGame = new MemoryWatcher<bool>((IntPtr)0x353838 + Pcsx2Offset);
 
   vars.Watchers = new MemoryWatcherList
   {
@@ -174,7 +174,7 @@ update
   if (timer.CurrentPhase == TimerPhase.NotRunning) { vars.Splits.Clear(); }
 }
 
-reset { return vars.InGame.Current == 0 && vars.InGame.Old == 1; }
+reset { return !vars.InGame.Current && vars.InGame.Old; }
 
 // Prevents the in-game timer from increasing on its own (it's synced to the game's time value)
 isLoading { return true; }
