@@ -103,7 +103,10 @@ init
     {Tuple.Create(7, 12, 0),  "stiverCC"}, // Kelly
     {Tuple.Create(7, 6, 11),  "gregSniped"}, // Karen
     {Tuple.Create(7, 15, 11), "gregSniped"}, // Kelly
-  }; 
+  };
+
+  // Keeps track of level states
+  vars.LevelId = new ExpandoObject();
 
   // In case of a PCSX2 update changing this, or using this script on another emulator
   const int Pcsx2Offset = 0x20000000;
@@ -155,8 +158,8 @@ update
   vars.Watchers.UpdateAll(game);
 
   // Manually update level ids
-  vars.LevelIdOld = Tuple.Create(vars.Area.Old, vars.SubArea.Old, vars.Checkpoint.Old);
-  vars.LevelId = Tuple.Create(vars.Area.Current, vars.SubArea.Current, vars.Checkpoint.Current);
+  vars.LevelId.Current = Tuple.Create(vars.Area.Current, vars.SubArea.Current, vars.Checkpoint.Current);
+  vars.LevelId.Old = Tuple.Create(vars.Area.Old, vars.SubArea.Old, vars.Checkpoint.Old);
 
   // Game time
   vars.GameTime = vars.GameTimeSeconds.Current + (vars.GameTimeTicks.Current / vars.TicksPerSecond);
@@ -186,15 +189,15 @@ split
   // The game retains area values in the main menu, so check this
   if (vars.InGame.Current == 0) { return false; }
 
-  // This controls most of the splits for level/checkpoint transitions
-  if (!vars.LevelId.Equals(vars.LevelIdOld))
+  // Splits for level/checkpoint transitions
+  if (!vars.LevelId.Current.Equals(vars.LevelId.Old))
   {
-    if (!vars.LevelIds.ContainsKey(vars.LevelId)) { return false; }
+    if (!vars.LevelIds.ContainsKey(vars.LevelId.Current)) { return false; }
 
     // (0, 0, 0) is the default value when LS is initialized so return to prevent a false split
-    if (vars.LevelIdOld.Equals(Tuple.Create(0, 0, 0))) { return false; } 
+    if (vars.LevelId.Old.Equals(Tuple.Create(0, 0, 0))) { return false; } 
 
-    string key = vars.LevelIds[vars.LevelId];
+    string key = vars.LevelIds[vars.LevelId.Current];
     if (!vars.Splits.Contains(key))
     {
       vars.Splits.Add(key);
